@@ -21,10 +21,24 @@ const sockets = [];
 
 const handleConnection = (socket) => {
   sockets.push(socket);
+  socket["nickname"] = "Anonymous"
   console.log("connected to browser");
   socket.on("close", ()=> console.log("disconnect server"));
   socket.on("message", (message) => {
-    sockets.forEach(aSocket => aSocket.send(message.toString('utf8')));
+    const jsMessage = JSON.parse(message);
+    console.log(jsMessage);
+    switch (jsMessage.type) { 
+      case "new_message":
+        console.log("mesa")
+        sockets.forEach(aSocket => aSocket.send(
+          `${socket.nickname}: ${jsMessage.payload}`
+        ));
+        break;
+      case "nickname":
+        socket["nickname"] = jsMessage.payload;
+        console.log(jsMessage.payload);
+        break;
+    }
   });
 }
 wss.on("connection", handleConnection)
