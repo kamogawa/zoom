@@ -7,6 +7,13 @@ room.hidden = true;
 
 let roomName;
 
+const addMessage = (message) => {
+  const ul = room.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = message;
+  ul.appendChild(li);
+}
+
 //socket.io 最後に設定してパラメータが関数の場合、BEからFEの関数が実行できる。
 //パラメータの設定は制限なし、
 form.addEventListener("submit", (event)=>{
@@ -20,4 +27,8 @@ form.addEventListener("submit", (event)=>{
   });
   roomName = input.value;
   input.value = "";
+});
+
+socket.on("welcome", () => {
+  addMessage("参加しました。");
 });
