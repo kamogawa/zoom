@@ -24,27 +24,41 @@ form.addEventListener("submit", (event)=>{
     room.hidden = false;
     const h3 = room.querySelector("h3");
     h3.innerText = `Room ${roomName}`;
-    const form = room.querySelector("form");
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const input = room.querySelector("input");
-      const inputVal = input.value;
-      socket.emit("new_message", input.value, roomName, () => {
-        addMessage(`You: ${inputVal}`);
-      });
-      input.value = "";
-    })
+
+    //メッセージEvnet
+    const messageForm = room.querySelector("#message");
+    messageForm.addEventListener("submit", handleMessageSubmit);
+
+    //nicknameEvnet
+    const nameForm = room.querySelector("#name");
+    nameForm.addEventListener("submit", handleNameSubmit);
   });
   roomName = input.value;
   input.value = "";
 });
 
-socket.on("welcome", () => {
-  addMessage("参加しました。");
+const handleMessageSubmit = (e) => {
+  e.preventDefault();
+  const input = room.querySelector("#message input");
+  const inputVal = input.value;
+  socket.emit("new_message", input.value, roomName, () => {
+    addMessage(`You: ${inputVal}`);
+  });
+  input.value = "";
+}
+
+const handleNameSubmit = (e) => {
+  e.preventDefault();
+  const input = room.querySelector("#name input");
+  socket.emit("nickname", input.value);
+}
+
+socket.on("welcome", (nickname) => {
+  addMessage(`${nickname}さんが参加しました。`);
 });
 
-socket.on("bye", () => {
-  addMessage("退場しました。");
+socket.on("bye", (nickname) => {
+  addMessage(`${nickname}さんが退場しました。`);
 });
 
 socket.on("new_message", addMessage);
