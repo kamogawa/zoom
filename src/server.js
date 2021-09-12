@@ -17,7 +17,8 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) => {
-  socket.onAny((event)=>{
+  //すべてのイベントがヒットする。
+  socket.onAny((event)  => {
     console.log(event);
   });
 
@@ -25,6 +26,17 @@ wsServer.on("connection", (socket) => {
     socket.join(roomName);
     done();
     socket.to(roomName).emit("welcome");
+  });
+
+  //Client側でDisconnectされた時、実行される。
+  socket.on("disconnecting", () => {
+    //rooms：重複データがないリスト　
+    socket.rooms.forEach(room => socket.to(room).emit("bye"))
+  });
+
+  socket.on("new_message", (message, roomName, done) => {
+    socket.to(roomName).emit("new_message", message);
+    done();
   });
 });
 
