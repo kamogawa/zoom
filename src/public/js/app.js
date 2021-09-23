@@ -1,81 +1,67 @@
 const socket = io();
 
-const welcome = document.getElementById("welcome");
-const form = welcome.querySelector("form");
-const room = document.getElementById("room");
-room.hidden = true;
+const myFace = document.getElementById("myFace");
+const muteBtn = document.getElementById("mute");
+const cameraBtn = document.getElementById("camera");
+const camerasSelect = document.getElementById("cameras");
 
-let roomName;
+let myStream;
+let muted = false;
+let cameraOff = false;
 
-const addMessage = (message) => {
-  const ul = room.querySelector("ul");
-  const li = document.createElement("li");
-  li.innerText = message;
-  ul.appendChild(li);
-}
-
-//socket.io 最後に設定してパラメータが関数の場合、BEからFEの関数が実行できる。
-//パラメータの設定は制限なし、
-form.addEventListener("submit", (event)=>{
-  event.preventDefault();
-  const input = form.querySelector("input");
-  socket.emit("enter_room", input.value, () => {
-    welcome.hidden = true;
-    room.hidden = false;
-    const h3 = room.querySelector("h3");
-    h3.innerText = `Room ${roomName}`;
-
-    //メッセージEvnet
-    const messageForm = room.querySelector("#message");
-    messageForm.addEventListener("submit", handleMessageSubmit);
-
-    //nicknameEvnet
-    const nameForm = room.querySelector("#name");
-    nameForm.addEventListener("submit", handleNameSubmit);
-  });
-  roomName = input.value;
-  input.value = "";
-});
-
-const handleMessageSubmit = (e) => {
-  e.preventDefault();
-  const input = room.querySelector("#message input");
-  const inputVal = input.value;
-  socket.emit("new_message", input.value, roomName, () => {
-    addMessage(`You: ${inputVal}`);
-  });
-  input.value = "";
-}
-
-const handleNameSubmit = (e) => {
-  e.preventDefault();
-  const input = room.querySelector("#name input");
-  socket.emit("nickname", input.value);
-}
-
-socket.on("welcome", (nickname, newCount) => {
-  const h3 = room.querySelector("h3");
-  h3.innerText = `Room ${roomName} (${newCount})`;
-  addMessage(`${nickname}さんが参加しました。`);
-});
-
-socket.on("bye", (nickname, newCount) => {
-  const h3 = room.querySelector("h3");
-  h3.innerText = `Room ${roomName} (${newCount})`;
-  addMessage(`${nickname}さんが退場しました。`);
-});
-
-socket.on("new_message", addMessage);
-
-socket.on("room_change", (rooms) => {
-  const roomList = welcome.querySelector("ul");
-  roomList.innerHTML = "";
-  if (rooms.length === 0) {
-    return;
+async function getCameras() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter((device) => device.kind === "videoinput");
+    cameras.forEach((camera) => {
+      const option = document.createElement("option");
+      option.value = camera.deviceId;
+      option.innerText = camera.label;
+      camerasSelect.appendChild(option);
+    });
+  } catch (e) {
+    console.log(e);
   }
-  rooms.forEach(room => {
-    const li = document.createElement("li");
-    li.innerText = room;
-    roomList.append(li);
-  });
+}
+
+
+async function getMedia() {
+  try {
+    myStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    });
+    myFace.srcObject = myStream;
+    await getCameras();
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+getMedia();
+
+muteBtn.addEventListener("click", () =>{
+  myStream
+    .getAudioTracks()
+    .forEach((track) => (track.enabled = !track.enabled));
+  if (!muted) {
+    muteBtn.innerText = "ミュート解除";
+    muted = true;
+  } else {
+    muteBtn.innerText = "ミュート";
+    muted = false;
+  }
+});
+
+cameraBtn.addEventListener("click", () => {
+  myStream
+    .getVideoTracks()
+    .forEach((track) => (track.enabled = !track.enabled));
+  if (cameraOff) {
+    cameraBtn.innerText = "カメラ Off";
+    cameraOff = false;
+  } else {
+    cameraBtn.innerText = "カメラ On";
+    cameraOff = true;
+  }
 });
