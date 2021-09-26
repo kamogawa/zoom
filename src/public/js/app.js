@@ -80,6 +80,6 @@ cameraBtn.addEventListener("click", () => {
   }
 });
 
-camerasSelect.addEventListener("input", () => {
+camerasSelect.addEventListener("input", async () => {
   await getMedia(camerasSelect.value);
 });
