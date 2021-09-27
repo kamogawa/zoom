@@ -13,6 +13,14 @@ app.get("/*", (_, res)=> res.redirect("/"));
 
 const handleListen = () => console.log("Listening on http://localhost:3000");
 
+wsServer.on("connection", (socket) => {
+  socket.on("join_room", (roomName, done) => {
+    socket.join(roomName);
+    done();
+    socket.to(roomName).emit("welcome");
+  });
+});
+
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
